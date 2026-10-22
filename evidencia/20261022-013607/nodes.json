@@ -1,0 +1,16 @@
+﻿[
+    {
+        "name":  "rabbit@rabbit1",
+        "running":  true,
+        "type":  "disc",
+        "mem_used":  177745920,
+        "disk_free":  1017833119744
+    },
+    {
+        "name":  "rabbit@rabbit2",
+        "running":  true,
+        "type":  "disc",
+        "mem_used":  179830784,
+        "disk_free":  1017833119744
+    }
+]

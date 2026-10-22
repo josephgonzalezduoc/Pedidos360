@@ -1,0 +1,28 @@
+﻿{
+    "value":  [
+                  {
+                      "vhost":  "/",
+                      "name":  "cmd-retention",
+                      "pattern":  "^q\\.cmd\\.(email|kitchen|invoice)$",
+                      "apply-to":  "queues",
+                      "definition":  {
+                                         "max-length":  10000,
+                                         "message-ttl":  3600000,
+                                         "overflow":  "reject-publish"
+                                     },
+                      "priority":  10
+                  },
+                  {
+                      "vhost":  "/",
+                      "name":  "dlq-retention",
+                      "pattern":  "^q\\.cmd\\.(email|kitchen|invoice)\\.dlq$",
+                      "apply-to":  "queues",
+                      "definition":  {
+                                         "max-length":  10000,
+                                         "message-ttl":  604800000
+                                     },
+                      "priority":  10
+                  }
+              ],
+    "Count":  2
+}

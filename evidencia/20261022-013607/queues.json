@@ -1,0 +1,89 @@
+﻿[
+    {
+        "name":  "q.cmd.email",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  0,
+        "messages_unacknowledged":  0,
+        "consumers":  1,
+        "policy":  "cmd-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  3600000,
+                                            "overflow":  "reject-publish"
+                                        }
+    },
+    {
+        "name":  "q.cmd.email.dlq",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  1,
+        "messages_unacknowledged":  0,
+        "consumers":  0,
+        "policy":  "dlq-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  604800000
+                                        }
+    },
+    {
+        "name":  "q.cmd.invoice",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  0,
+        "messages_unacknowledged":  0,
+        "consumers":  1,
+        "policy":  "cmd-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  3600000,
+                                            "overflow":  "reject-publish"
+                                        }
+    },
+    {
+        "name":  "q.cmd.invoice.dlq",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  1,
+        "messages_unacknowledged":  0,
+        "consumers":  0,
+        "policy":  "dlq-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  604800000
+                                        }
+    },
+    {
+        "name":  "q.cmd.kitchen",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  0,
+        "messages_unacknowledged":  0,
+        "consumers":  1,
+        "policy":  "cmd-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  3600000,
+                                            "overflow":  "reject-publish"
+                                        }
+    },
+    {
+        "name":  "q.cmd.kitchen.dlq",
+        "node":  "rabbit@rabbit1",
+        "type":  "classic",
+        "durable":  true,
+        "messages_ready":  1,
+        "messages_unacknowledged":  0,
+        "consumers":  0,
+        "policy":  "dlq-retention",
+        "effective_policy_definition":  {
+                                            "max-length":  10000,
+                                            "message-ttl":  604800000
+                                        }
+    }
+]

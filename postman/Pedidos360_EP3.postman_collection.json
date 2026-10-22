@@ -1,0 +1,1469 @@
+{
+  "info": {
+    "name": "Pedidos360 EP3 - Verificacion reproducible",
+    "description": "Ejecutar en orden con los cuatro servicios activos y delay 500 ms. Coleccion generada desde las rutas del codigo revisado. Las DLQ conservan mensajes anteriores.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "catalog",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "orders",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "notify",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "admin",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "productoId",
+      "value": ""
+    },
+    {
+      "key": "pedidoId",
+      "value": ""
+    },
+    {
+      "key": "runTag",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Salud de servicios",
+      "item": [
+        {
+          "name": "Catalogo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalog}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Estado UP\", function () { pm.expect(pm.response.json().status === \"UP\").to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orders}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Estado UP\", function () { pm.expect(pm.response.json().status === \"UP\").to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consumidores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{notify}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Estado UP\", function () { pm.expect(pm.response.json().status === \"UP\").to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Administrador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{admin}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Estado UP\", function () { pm.expect(pm.response.json().status === \"UP\").to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Catalogo y stock",
+      "item": [
+        {
+          "name": "Crear producto y capturar ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto EP3\",\n  \"precio\": 6490,\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"productoId\", pm.response.json().id); }"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"runTag\", Date.now().toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalog}}/api/productos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(Array.isArray(pm.response.json())).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar producto creado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalog}}/api/productos/{{productoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Actualizar producto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto EP3 actualizado\",\n  \"precio\": 6490,\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar precio cero",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto EP3\",\n  \"precio\": 0,\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar stock negativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto invalido\",\n  \"precio\": 100,\n  \"stock\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Descontar 3 unidades",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}/stock/descontar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Stock queda en 7\", function () { pm.expect(pm.response.json().stock === 7).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stock insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}/stock/descontar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cantidad cero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}/stock/descontar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cantidad negativa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{catalog}}/api/productos/{{productoId}}/stock/descontar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fallo no modifica stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalog}}/api/productos/{{productoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Stock sigue en 7\", function () { pm.expect(pm.response.json().stock === 7).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Producto inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{catalog}}/api/productos/9223372036854775807"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Pedidos",
+      "item": [
+        {
+          "name": "Crear pedido y capturar ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"Joseph Demo\",\n  \"email\": \"joseph@example.com\",\n  \"productoId\": {{productoId}},\n  \"cantidad\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"pedidoId\", pm.response.json().id); }",
+                  "pm.test(\"Precio calculado desde catalogo\", function () { pm.expect(pm.response.json().total === 12980).to.eql(true); });",
+                  "pm.test(\"Estado CREADO\", function () { pm.expect(pm.response.json().estado === \"CREADO\").to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orders}}/api/pedidos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar pedido creado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cantidad cero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"Joseph Demo\",\n  \"email\": \"joseph@example.com\",\n  \"productoId\": {{productoId}},\n  \"cantidad\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Correo invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"Joseph Demo\",\n  \"email\": \"no-es-correo\",\n  \"productoId\": {{productoId}},\n  \"cantidad\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stock insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"Joseph Demo\",\n  \"email\": \"joseph@example.com\",\n  \"productoId\": {{productoId}},\n  \"cantidad\": 8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Producto inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente\": \"Joseph Demo\",\n  \"email\": \"joseph@example.com\",\n  \"productoId\": 9223372036854775807,\n  \"cantidad\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orders}}/api/pedidos/9223372036854775807"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Comandos correctos",
+      "item": [
+        {
+          "name": "EMAIL DIRECT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/EMAIL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "pm.test(\"Confirmado por RabbitMQ\", function () { pm.expect(pm.response.json().estado === \"CONFIRMADO_POR_BROKER\").to.eql(true); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "KITCHEN DIRECT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/KITCHEN",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "pm.test(\"Confirmado por RabbitMQ\", function () { pm.expect(pm.response.json().estado === \"CONFIRMADO_POR_BROKER\").to.eql(true); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "INVOICE TOPIC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/INVOICE",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"TOPIC\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "pm.test(\"Confirmado por RabbitMQ\", function () { pm.expect(pm.response.json().estado === \"CONFIRMADO_POR_BROKER\").to.eql(true); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Destino invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/INVALIDO",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/EMAIL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"INVALIDO\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pedido inexistente no publica",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/9223372036854775807/comandos/EMAIL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Fallos controlados y DLQ",
+      "item": [
+        {
+          "name": "Publicar fallo EMAIL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/EMAIL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId del fallo\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inspeccionar DLQ EMAIL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{notify}}/api/dlq/EMAIL/inspeccionar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Hay carta muerta\", function () { pm.expect(pm.response.json().encontrado === true).to.eql(true); });",
+                  "pm.test(\"Mensaje conservado\", function () { pm.expect(pm.response.json().conservadoEnDlq === true).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicar fallo KITCHEN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/KITCHEN",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"TOPIC\",\n  \"falloControlado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId del fallo\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inspeccionar DLQ KITCHEN",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{notify}}/api/dlq/KITCHEN/inspeccionar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Hay carta muerta\", function () { pm.expect(pm.response.json().encontrado === true).to.eql(true); });",
+                  "pm.test(\"Mensaje conservado\", function () { pm.expect(pm.response.json().conservadoEnDlq === true).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicar fallo INVOICE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orders}}/api/pedidos/{{pedidoId}}/comandos/INVOICE",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exchange\": \"DIRECT\",\n  \"falloControlado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "if (pm.response.code === 202) { console.log(\"eventId del fallo\", pm.response.json().eventId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inspeccionar DLQ INVOICE",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{notify}}/api/dlq/INVOICE/inspeccionar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Hay carta muerta\", function () { pm.expect(pm.response.json().encontrado === true).to.eql(true); });",
+                  "pm.test(\"Mensaje conservado\", function () { pm.expect(pm.response.json().conservadoEnDlq === true).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Administrador RabbitMQ",
+      "item": [
+        {
+          "name": "Crear cola",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/queues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"demo.queue.{{runTag}}\",\n  \"ttlMs\": 60000,\n  \"maxLength\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear exchange direct",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/exchanges",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"demo.direct.{{runTag}}\",\n  \"tipo\": \"DIRECT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear binding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/bindings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cola\": \"demo.queue.{{runTag}}\",\n  \"exchange\": \"demo.direct.{{runTag}}\",\n  \"routingKey\": \"demo.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nombre vacio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/queues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"ttlMs\": 60000,\n  \"maxLength\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TTL negativo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/queues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"demo.queue.{{runTag}}\",\n  \"ttlMs\": -1,\n  \"maxLength\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tipo de exchange invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/exchanges",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"demo.direct.{{runTag}}\",\n  \"tipo\": \"INVALIDO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Binding de cola inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/bindings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cola\": \"demo.missing.{{runTag}}\",\n  \"exchange\": \"demo.direct.{{runTag}}\",\n  \"routingKey\": \"demo.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "No eliminar exchange con binding",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{admin}}/api/admin/exchanges/demo.direct.{{runTag}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar binding",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/bindings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cola\": \"demo.queue.{{runTag}}\",\n  \"exchange\": \"demo.direct.{{runTag}}\",\n  \"routingKey\": \"demo.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar cola vacia",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{admin}}/api/admin/queues/demo.queue.{{runTag}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar exchange",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{admin}}/api/admin/exchanges/demo.direct.{{runTag}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear exchange topic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{admin}}/api/admin/exchanges",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"demo.topic.{{runTag}}\",\n  \"tipo\": \"TOPIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar exchange topic",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{admin}}/api/admin/exchanges/demo.topic.{{runTag}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

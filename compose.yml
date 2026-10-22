@@ -1,0 +1,56 @@
+name: pedidos360
+
+services:
+  catalog-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: catalog_user
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD:?Define CATALOG_DB_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - catalog_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog_user -d catalog_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  orders-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: orders_user
+      POSTGRES_PASSWORD: ${ORDERS_DB_PASSWORD:?Define ORDERS_DB_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders_user -d orders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  rabbitmq:
+    image: rabbitmq:4.2.9-management
+    hostname: pedidos360-rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: pedidos360
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Define RABBITMQ_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:45672:5672"
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  catalog_data:
+  orders_data:
+  rabbit_data:

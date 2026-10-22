@@ -1,0 +1,17 @@
+﻿[
+    {
+        "name":  "cmd.dead.dlx",
+        "type":  "direct",
+        "durable":  true
+    },
+    {
+        "name":  "cmd.direct",
+        "type":  "direct",
+        "durable":  true
+    },
+    {
+        "name":  "cmd.topic",
+        "type":  "topic",
+        "durable":  true
+    }
+]
